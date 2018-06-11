@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/huandu/facebook"
 	"github.com/julienschmidt/httprouter"
 	"log"
@@ -9,7 +11,15 @@ import (
 	"strconv"
 )
 
+type LoginResponse struct {
+	RedirectUrl string `json:"redirectUrl"`
+	UserId      string `json:"userId"`
+}
+
 func HandleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	response := &LoginResponse{}
+	defer json.NewEncoder(w).Encode(response)
+
 	code := r.URL.Query().Get("code")
 	loginError := r.URL.Query().Get("error")
 
@@ -23,9 +33,9 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		q.Set("redirect_uri", redirectUri)
 		fbUrl.RawQuery = q.Encode()
 
-		http.Redirect(w, r, fbUrl.String(), http.StatusFound)
+		response.RedirectUrl = fbUrl.String()
 	} else {
-		defer http.Redirect(w, r, config.UiPublicUrl, http.StatusFound)
+		response.RedirectUrl = config.UiPublicUrl
 
 		if loginError == "" {
 			tokenRes, err := facebook.Get("/oauth/access_token", facebook.Params{
@@ -51,8 +61,10 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			}
 
 			log.Println(me)
-		}
 
+			userId := me.Get("id").(string)
+			response.UserId = fmt.Sprintf("facebook.%v", userId)
+		}
 	}
 }
 
