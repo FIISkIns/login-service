@@ -81,10 +81,22 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 				log.Println("Error getting profile information", err)
 				return
 			}
-
 			userId := fmt.Sprintf("facebook.%v", me.Get("id").(string))
 			userName := me.Get("name").(string)
-			userPicture := me.Get("picture").(map[string]interface{})["data"].(map[string]interface{})["url"].(string)
+
+			picture, err := facebook.Get("/me/picture", facebook.Params{
+				"access_token": accessToken,
+				"type":         "square",
+				"height":       400,
+				"redirect":     false,
+			})
+			var userPicture string
+			if err != nil {
+				log.Println("Error getting profile picture", err)
+				userPicture = me.Get("picture").(map[string]interface{})["data"].(map[string]interface{})["url"].(string)
+			} else {
+				userPicture = picture.Get("data").(map[string]interface{})["url"].(string)
+			}
 
 			_, err = database.Exec("INSERT INTO users(id, name, picture) VALUES (?, ?, ?) "+
 				"ON DUPLICATE KEY UPDATE name = VALUES(name), picture = VALUES(picture)", userId, userName, userPicture)
