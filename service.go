@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/dimfeld/httptreemux"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/huandu/facebook"
 	"log"
 	"net/http"
@@ -39,15 +39,20 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 
 	code := r.URL.Query().Get("code")
 	loginError := r.URL.Query().Get("error")
+	returnUrl := r.URL.Query().Get("state")
+	if returnUrl == "" {
+		returnUrl = r.URL.Query().Get("return_url")
+	}
 
-	redirectUri := config.UiPublicUrl + "/login"
+	redirectUrl := config.UiPublicUrl + "/login"
 
 	if code == "" && loginError == "" {
 		fbUrl, _ := url.Parse("https://www.facebook.com/v3.0/dialog/oauth")
 
 		q := fbUrl.Query()
 		q.Set("app_id", config.FacebookAppId)
-		q.Set("redirect_uri", redirectUri)
+		q.Set("redirect_uri", redirectUrl)
+		q.Set("state", returnUrl)
 		fbUrl.RawQuery = q.Encode()
 
 		response.RedirectUrl = fbUrl.String()
@@ -58,7 +63,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 			tokenRes, err := facebook.Get("/oauth/access_token", facebook.Params{
 				"client_id":     config.FacebookAppId,
 				"client_secret": config.FacebookAppSecret,
-				"redirect_uri":  redirectUri,
+				"redirect_uri":  redirectUrl,
 				"code":          code,
 			})
 			if err != nil {
@@ -88,6 +93,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 				return
 			}
 
+			response.RedirectUrl = returnUrl
 			response.UserId = userId
 		}
 	}
