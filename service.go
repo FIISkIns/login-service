@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dimfeld/httptreemux"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/huandu/facebook"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 var database *sql.DB
@@ -21,13 +22,14 @@ type LoginResponse struct {
 }
 
 type UserInfo struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Picture string `json:"picture"`
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	Picture   string `json:"picture"`
+	FirstSeen string `json:"firstSeen"`
 }
 
 func createTable() {
-	query := "CREATE TABLE users (id VARCHAR(100) NOT NULL PRIMARY KEY, name VARCHAR(200) NOT NULL, picture TEXT)"
+	query := "CREATE TABLE users (id VARCHAR(100) NOT NULL PRIMARY KEY, name VARCHAR(200) NOT NULL, picture TEXT, first_seen DATETIME DEFAULT CURRENT_TIMESTAMP)"
 	_, err := database.Exec(query)
 	log.Println("Table creation returned:", err)
 }
@@ -98,8 +100,8 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 				userPicture = picture.Get("data").(map[string]interface{})["url"].(string)
 			}
 
-			_, err = database.Exec("INSERT INTO users(id, name, picture) VALUES (?, ?, ?) "+
-				"ON DUPLICATE KEY UPDATE name = VALUES(name), picture = VALUES(picture)", userId, userName, userPicture)
+			_, err = database.Exec("INSERT INTO users(id, name, picture, first_seen) VALUES (?, ?, ?, ?) "+
+				"ON DUPLICATE KEY UPDATE name = VALUES(name), picture = VALUES(picture)", userId, userName, userPicture, time.Now().UTC())
 			if err != nil {
 				log.Println("Error saving user information", err)
 				return
@@ -115,7 +117,7 @@ func HandleGetUserInfo(w http.ResponseWriter, r *http.Request, ps map[string]str
 	userId := ps["userId"]
 	ret := &UserInfo{}
 
-	rows, err := database.Query("SELECT id, name, picture FROM users WHERE id = ?", userId)
+	rows, err := database.Query("SELECT id, name, picture, first_seen FROM users WHERE id = ?", userId)
 	if err != nil {
 		log.Println("Database query error:", err)
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -124,12 +126,14 @@ func HandleGetUserInfo(w http.ResponseWriter, r *http.Request, ps map[string]str
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&ret.Id, &ret.Name, &ret.Picture)
+		var firstSeen mysql.NullTime
+		err := rows.Scan(&ret.Id, &ret.Name, &ret.Picture, &firstSeen)
 		if err != nil {
 			log.Println("Database query error:", err)
 			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
 		}
+		ret.FirstSeen = firstSeen.Time.Format(time.RFC3339)
 	}
 
 	if ret.Id != "" {
