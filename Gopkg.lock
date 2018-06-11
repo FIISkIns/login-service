@@ -2,16 +2,22 @@
 
 
 [[projects]]
+  name = "github.com/dimfeld/httptreemux"
+  packages = ["."]
+  revision = "7f532489e7739b3d49df5c602bf63549881fe753"
+  version = "v5.0.1"
+
+[[projects]]
+  name = "github.com/go-sql-driver/mysql"
+  packages = ["."]
+  revision = "d523deb1b23d913de5bdada721a6071e71283618"
+  version = "v1.4.0"
+
+[[projects]]
   name = "github.com/huandu/facebook"
   packages = ["."]
   revision = "2ba1fa66dfd0a3e3a5cf7caeeb1e6702030c5030"
   version = "v2.2.0"
-
-[[projects]]
-  name = "github.com/julienschmidt/httprouter"
-  packages = ["."]
-  revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
-  version = "v1.1"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -19,9 +25,15 @@
   revision = "f611eb38b3875cc3bd991ca91c51d06446afa14c"
   version = "v1.3.0"
 
+[[projects]]
+  name = "google.golang.org/appengine"
+  packages = ["cloudsql"]
+  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
+  version = "v1.0.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bef7ced7ef5e2024006be24bf7c7e3480dc91efedbedcb87fa37fd58dc11a486"
+  inputs-digest = "ba4008df3d9bd85c75d248351144fcb5a01ffa53d67e6acad68f763f0575c977"
   solver-name = "gps-cdcl"
   solver-version = 1
