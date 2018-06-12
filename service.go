@@ -35,6 +35,12 @@ func createTable() {
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	err := database.Ping()
+	if err != nil {
+		log.Fatalln("Database error:", err)
+		return
+	}
+
 	response := &LoginResponse{}
 	w.Header().Set("Content-Type", "application/json")
 	defer json.NewEncoder(w).Encode(response)
@@ -114,6 +120,12 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 }
 
 func HandleGetUserInfo(w http.ResponseWriter, r *http.Request, ps map[string]string) {
+	err := database.Ping()
+	if err != nil {
+		log.Fatalln("Database error:", err)
+		return
+	}
+
 	userId := ps["userId"]
 	ret := &UserInfo{}
 
