@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dimfeld/httptreemux"
+	"github.com/dimiro1/health"
+	"github.com/dimiro1/health/db"
+	healthurl "github.com/dimiro1/health/url"
 	"github.com/go-sql-driver/mysql"
 	"github.com/huandu/facebook"
 	"log"
@@ -15,6 +18,7 @@ import (
 )
 
 var database *sql.DB
+var healthCheck health.Handler
 
 type LoginResponse struct {
 	RedirectUrl string `json:"redirectUrl"`
@@ -156,6 +160,10 @@ func HandleGetUserInfo(w http.ResponseWriter, r *http.Request, ps map[string]str
 	}
 }
 
+func HandleHealthCheck(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	healthCheck.ServeHTTP(w, r)
+}
+
 func main() {
 	initConfig()
 
@@ -166,9 +174,14 @@ func main() {
 	}
 	createTable()
 
+	healthCheck = health.NewHandler()
+	healthCheck.AddChecker("MySQL", db.NewMySQLChecker(database))
+	healthCheck.AddChecker("Facebook", healthurl.NewChecker("https://www.facebook.com/platform/api-status/"))
+
 	router := httptreemux.New()
 	router.GET("/login", HandleLogin)
 	router.GET("/:userId", HandleGetUserInfo)
+	router.GET("/health", HandleHealthCheck)
 
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(config.Port), router))
 }

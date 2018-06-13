@@ -8,6 +8,16 @@
   version = "v5.0.1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/dimiro1/health"
+  packages = [
+    ".",
+    "db",
+    "url"
+  ]
+  revision = "22672c48855646f5d54b6315336d2e3fee6eef81"
+
+[[projects]]
   name = "github.com/go-sql-driver/mysql"
   packages = ["."]
   revision = "d523deb1b23d913de5bdada721a6071e71283618"
@@ -34,6 +44,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ba4008df3d9bd85c75d248351144fcb5a01ffa53d67e6acad68f763f0575c977"
+  inputs-digest = "4aa6f14cd58d002a36ad357abe05d24cdecaba5f024b26669f44ad141960cc45"
   solver-name = "gps-cdcl"
   solver-version = 1
